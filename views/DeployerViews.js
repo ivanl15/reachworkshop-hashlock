@@ -1,79 +1,106 @@
 import React from 'react';
+import PlayerViews from './PlayerViews';
 
-const exports = {};
+const exports = {...PlayerViews};
+
+const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
 exports.Wrapper = class extends React.Component {
   render() {
     const {content} = this.props;
     return (
-      <div className="App">
-        <header className="App-header" id="root">
-          <h1>Hashlock</h1>
-          {content}
-        </header>
+      <div className="Deployer">
+        <h2>Deployer (Alice)</h2>
+        {content}
       </div>
     );
   }
 }
 
-exports.ConnectAccount = class extends React.Component {
+exports.SetAmt = class extends React.Component {
   render() {
+    const {parent, defaultAmt, standardUnit, defaultPass} = this.props;
+    const amt = (this.state || {}).amt || defaultAmt;
+    const pass = (this.state || {}).pass || defaultPass;
     return (
       <div>
-        Please wait while we connect to your account.
-        If this takes more than a few seconds, there may be something wrong.
-      </div>
-    )
-  }
-}
-
-exports.FundAccount = class extends React.Component {
-  render() {
-    const {bal, standardUnit, defaultFundAmt, parent} = this.props;
-    const fAmt = (this.state || {}).fAmt || defaultFundAmt;
-    return (
-      <div>
-        <h2>Fund account</h2>
-        <br />
-        Balance: {bal} {standardUnit}
-        <hr />
-        Would you like to fund your account with additional {standardUnit}?
-        <br />
-        (This only works on certain devnets)
+        Amount:
         <br />
         <input
           type='number'
-          placeholder={defaultFundAmt}
-          onChange={(e) => this.setState({fAmt: e.currentTarget.value})}
+          placeholder={defaultAmt}
+          onChange={(e) => this.setState({amt: e.currentTarget.value})}
+        /> {standardUnit}
+        <br />
+        <br />
+        Password:
+        <br />
+        <input
+          type='number'
+          placeholder={defaultPass}
+          onChange={(e) => this.setState({pass: e.currentTarget.value})}
         />
-        <button onClick={() => parent.fundAccount(fAmt)}>Fund Account</button>
-        <button onClick={() => parent.skipFundAccount()}>Skip</button>
+        <br />
+        <br />
+        <button
+          onClick={() => parent.setAmtAndPass(amt, pass)}
+        >Set</button>
       </div>
     );
   }
 }
 
-exports.DeployerOrAttacher = class extends React.Component {
+exports.Deploy = class extends React.Component {
   render() {
-    const {parent} = this.props;
+    const {parent, amt, standardUnit, pass} = this.props;
     return (
       <div>
-        Please select a role:
+        Amount (pay to deploy): <strong>{amt}</strong> {standardUnit}
         <br />
-        <p>
-          <button
-            onClick={() => parent.selectDeployer()}
-          >Deployer</button>
-          <br /> Set the amount, deploy the contract.
-        </p>
-        <p>
-          <button
-            onClick={() => parent.selectAttacher()}
-          >Attacher</button>
-          <br /> Attach to the Deployer's contract.
-        </p>
+        Password: <strong>{pass}</strong>
+        <br />
+        <button
+          onClick={() => parent.deploy()}
+        >Deploy</button>
       </div>
     );
+  }
+}
+
+exports.Deploying = class extends React.Component {
+  render() {
+    return (
+      <div>Deploying... please wait.</div>
+    );
+  }
+}
+
+exports.WaitingForAttacher = class extends React.Component {
+  async copyToClipborad(button) {
+    const {ctcInfoStr} = this.props;
+    navigator.clipboard.writeText(ctcInfoStr);
+    const origInnerHTML = button.innerHTML;
+    button.innerHTML = 'Copied!';
+    button.disabled = true;
+    await sleep(1000);
+    button.innerHTML = origInnerHTML;
+    button.disabled = false;
+  }
+ 
+  render() {
+    const {ctcInfoStr} = this.props;
+    return (
+      <div>
+        Waiting for Attacher to join...
+        <br /> Please give them this contract info:
+        <pre className='ContractInfo'>
+          {ctcInfoStr}
+        </pre>
+        <button
+          onClick={(e) => this.copyToClipborad(e.currentTarget)}
+        >Copy to clipboard</button>
+      </div>
+    )
   }
 }
 
